@@ -1,0 +1,4 @@
+ClaimSizeLimits:
+  world: -1
+  new2024: 500
+MessageOfClaimLimit: 保護のサイズが大きすぎます！このワールドの1つの保護の大きさは最大{0}ブロックです。

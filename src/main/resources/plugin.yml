@@ -1,0 +1,4 @@
+name: GriefPreventionSizeLimitter
+version: '${project.version}'
+main: janullq.griefpreventionsizelimitter.Main
+api-version: '1.20'
