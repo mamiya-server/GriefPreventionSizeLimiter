@@ -47,7 +47,7 @@ public final class Main extends JavaPlugin implements Listener {
     }
     @Override
     public void onEnable() {
-        getLogger().info("[GP Limitter] GriefPreventionAreaSizeLimiter is Loaded.");
+        getLogger().info("[GP Limiter] GriefPreventionAreaSizeLimiter is Loaded.");
         saveDefaultConfig();
         getServer().getPluginManager().registerEvents(this,this);
         loadAndUpdateConfig();

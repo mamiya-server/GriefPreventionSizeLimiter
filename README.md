@@ -1,4 +1,4 @@
-# GriefPreventionSizeLimitter
+# GriefPreventionSizeLimiter
 ワールドごとにGriefPreventionで作成可能な1つの保護の大きさの上限を設定するプラグインです。
 保護の作成時および編集時に、上限値を超えたサイズになっている場合はキャンセルされます。
 
