@@ -2,3 +2,19 @@ name: GriefPreventionSizeLimiter
 version: '${project.version}'
 main: janullq.griefpreventionsizelimiter.Main
 api-version: '1.20'
+commands:
+  reloadGpLimiter:
+    description: Reload config of GriefPreventionSizeLimiter.
+    aliases: reloadgpl
+    permission: GriefPreventionSizeLimiter.command.reloadGpLimiter
+    permission-message: You do not have permission to perform this command.
+    usage: /reloadGpLimiter
+
+permissions:
+  GriefPreventionSizeLimiter.command.*:
+    description: Allows you to perform commands in this plugin.
+    children:
+      GriefPreventionSizeLimiter.command.reloadGpLimiter: true
+  GriefPreventionSizeLimiter.command.reloadGpLimiter:
+    description: Allows you to perform /reloadGpLimiter command.
+    default: op

@@ -4,12 +4,15 @@ import me.ryanhamshire.GriefPrevention.Claim;
 import me.ryanhamshire.GriefPrevention.events.ClaimCreatedEvent;
 import me.ryanhamshire.GriefPrevention.events.ClaimResizeEvent;
 import org.bukkit.World;
+import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -92,5 +95,17 @@ public final class Main extends JavaPlugin implements Listener {
                 player.sendMessage(this.config_message_of_claimLimit.replace("{0}", String.valueOf(maxAreaSizeOfWorld)).replace("{1}", String.valueOf(areaSize)));
             }
         }
+    }
+
+    @Override
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String commandLabel, @NotNull String[] args) {
+        // /reloadGpLimiterコマンド実行時
+        if (cmd.getName().equalsIgnoreCase("reloadGpLimiter") || cmd.getName().equalsIgnoreCase("reloadgpl")) {
+            this.loadAndUpdateConfig();
+            getLogger().info("[GP Limiter] GriefPreventionSizeLimiter is reloaded.");
+            if((sender instanceof Player)) sender.sendMessage("[GP Limiter] GriefPreventionSizeLimiter is reloaded.");
+            return true;
+        }
+        return false;
     }
 }
