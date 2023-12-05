@@ -1,8 +1,8 @@
-package janullq.griefpreventionsizelimitter;
+package janullq.griefpreventionsizelimiter;
 
 import me.ryanhamshire.GriefPrevention.Claim;
 import me.ryanhamshire.GriefPrevention.events.ClaimCreatedEvent;
-import me.ryanhamshire.GriefPrevention.events.ClaimInspectionEvent;
+import me.ryanhamshire.GriefPrevention.events.ClaimResizeEvent;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -36,7 +36,7 @@ public final class Main extends JavaPlugin implements Listener {
             outConfig.set("ClaimSizeLimits." + world.getName(), maxArea);
             this.config_claim_size_limits.put(world.getName(), maxArea);
         }
-        this.config_message_of_claimLimit = config.getString("MessageOfClaimLimit", "This claim is too large! Claims must be {0} blocks or less.");
+        this.config_message_of_claimLimit = config.getString("MessageOfClaimLimit", "§dThis claim is too large! Claims must be {0} blocks or less. (This claim is {1} Blocks)");
         outConfig.set("MessageOfClaimLimit", this.config_message_of_claimLimit);
         try {
             outConfig.save(configFilePath);
@@ -46,46 +46,47 @@ public final class Main extends JavaPlugin implements Listener {
     }
     @Override
     public void onEnable() {
-        getLogger().info("GriefPreventionAreaSizeLimitter is Loaded.サイズ制限プラグイン読み込み");
+        getLogger().info("GriefPreventionAreaSizeLimiter is Loaded.サイズ制限プラグイン読み込み");
         saveDefaultConfig();
         getServer().getPluginManager().registerEvents(this,this);
         loadAndUpdateConfig();
     }
 
     @EventHandler
-    public void onJoin(PlayerJoinEvent event){
+    public void onJoin(PlayerJoinEvent event) {
         getLogger().info("参加！");
         Player player = event.getPlayer();
         player.sendMessage("ようこそ！"+"§a"+player.getName()+"さん！");
     }
 
     @EventHandler
-    public void onClaimCreated(ClaimCreatedEvent event)
-    {
+    public void onClaimCreated(ClaimCreatedEvent event) {
+        // 保護作成時の面積チェック
         Claim claim = event.getClaim();
-		int areaSize = claim.getArea();
+        CommandSender player = event.getCreator();
+        int areaSize = claim.getArea();
         String worldName = claim.getLesserBoundaryCorner().getWorld().getName(); //作成した保護のあるワールド名
-        int maxAreaOfWorld = config_claim_size_limits.get(worldName);
-        CommandSender creator = event.getCreator();
-        if (creator != null) {
-            creator.sendMessage("Claimの作成！サイズ" + areaSize + ",ワールド名: " + worldName, "ワールドの面積上限: " + maxAreaOfWorld);
+        int maxAreaSizeOfWorld = config_claim_size_limits.get(worldName);
+        if (maxAreaSizeOfWorld != -1 && areaSize > maxAreaSizeOfWorld) {
+            event.setCancelled(true);
+            if (player != null) {
+                player.sendMessage(this.config_message_of_claimLimit.replace("{0}", String.valueOf(maxAreaSizeOfWorld)).replace("{1}", String.valueOf(areaSize)));
+            }
         }
-
-
-//        getLogger().info("Claimの変更！サイズ" + previousAreaSize + "->" +  areaSize);
-//        getLogger().info("calcelするで！");
-//        event.setCancelled(true);
-
     }
-
     @EventHandler
-    public void onClaimInspect(ClaimInspectionEvent event)
-    {
-        getLogger().info("ClaimのInspect！");
-    }
-
-    @Override
-    public void onDisable() {
-        // Plugin shutdown logic
+    public void onClaimResized(ClaimResizeEvent event) {
+        // 保護サイズ変更時の面積チェック
+        Claim claim = event.getTo();
+        CommandSender player = event.getModifier();
+        int areaSize = claim.getArea();
+        String worldName = claim.getLesserBoundaryCorner().getWorld().getName(); //作成した保護のあるワールド名
+        int maxAreaSizeOfWorld = config_claim_size_limits.get(worldName);
+        if (maxAreaSizeOfWorld != -1 && areaSize > maxAreaSizeOfWorld) {
+            event.setCancelled(true);
+            if (player != null) {
+                player.sendMessage(this.config_message_of_claimLimit.replace("{0}", String.valueOf(maxAreaSizeOfWorld)).replace("{1}", String.valueOf(areaSize)));
+            }
+        }
     }
 }
