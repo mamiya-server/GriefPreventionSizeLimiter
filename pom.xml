@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>jaNullq</groupId>
-    <artifactId>GriefPreventionSizeLimitter</artifactId>
+    <artifactId>GriefPreventionSizeLimiter</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>GriefPreventionSizeLimitter</name>
+    <name>GriefPreventionSizeLimiter</name>
 
     <properties>
         <java.version>1.8</java.version>
