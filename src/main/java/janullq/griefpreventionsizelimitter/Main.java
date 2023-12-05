@@ -1,8 +1,10 @@
 package janullq.griefpreventionsizelimitter;
 
-import me.ryanhamshire.GriefPrevention.events.ClaimChangeEvent;
+import me.ryanhamshire.GriefPrevention.Claim;
+import me.ryanhamshire.GriefPrevention.events.ClaimCreatedEvent;
 import me.ryanhamshire.GriefPrevention.events.ClaimInspectionEvent;
 import org.bukkit.World;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -58,14 +60,21 @@ public final class Main extends JavaPlugin implements Listener {
     }
 
     @EventHandler
-    public void onClaimChanged(ClaimChangeEvent event)
+    public void onClaimCreated(ClaimCreatedEvent event)
     {
-		int areaSize = event.getTo().getArea();
-        int previousAreaSize = event.getFrom().getArea();
+        Claim claim = event.getClaim();
+		int areaSize = claim.getArea();
+        String worldName = claim.getLesserBoundaryCorner().getWorld().getName(); //作成した保護のあるワールド名
+        int maxAreaOfWorld = config_claim_size_limits.get(worldName);
+        CommandSender creator = event.getCreator();
+        if (creator != null) {
+            creator.sendMessage("Claimの作成！サイズ" + areaSize + ",ワールド名: " + worldName, "ワールドの面積上限: " + maxAreaOfWorld);
+        }
 
-        getLogger().info("Claimの変更！サイズ" + String.valueOf(previousAreaSize) + "->" +  String.valueOf(areaSize));
-        getLogger().info("calcelするで！");
-        event.setCancelled(true);
+
+//        getLogger().info("Claimの変更！サイズ" + previousAreaSize + "->" +  areaSize);
+//        getLogger().info("calcelするで！");
+//        event.setCancelled(true);
 
     }
 
