@@ -13,7 +13,9 @@ Paper 1.20.1で動作確認 (要 GriefPrevention)
 
 ## 設定変更
 
-設定を書き換えたら、サーバーを再起動するか、`/reload`コマンドを使用してプラグイン再読み込みを実施してください。
+設定を書き換えたら、`/reloadGpLimiter`(または`/reloadgpl`)コマンドを用いると再読みされます。
+
+(サーバーを再起動するか、`/reload`コマンドでプラグインを読み直してもよい)
 
 設定例
 ```yaml
@@ -30,3 +32,6 @@ IgnoreIfAdminClaim: true
 + `MessageOfClaimLimit`: 上限値を超えた保護を取ろうとした際に表示されるメッセージです。
   + `{0}`はそのワールドの最大ブロック数、`{1}`は現在取ろうとしている保護のブロック数に置き換えられます。
 + `IgnoreIfAdminClaim`: `true`の場合、Admin保護で保護ブロック数上限を無視します。
+
+## コマンド
++ `/reloadGpLimiter`(`/reloadgpl`): `config.yml`を再読み込みします。 
