@@ -1,4 +1,4 @@
 ClaimSizeLimits:
   world: -1
-  new2024: 500
 MessageOfClaimLimit: §d保護のサイズが大きすぎます！このワールドの1つの保護の大きさは最大{0}ブロックです。この保護の大きさ={1}ブロック
+IgnoreIfAdminClaim: true

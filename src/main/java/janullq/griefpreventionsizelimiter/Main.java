@@ -7,10 +7,8 @@ import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -23,6 +21,7 @@ public final class Main extends JavaPlugin implements Listener {
     final static String configFilePath = dataLayerFolderPath + File.separator + "config.yml";
     public HashMap<String, Integer> config_claim_size_limits;
     public String config_message_of_claimLimit;
+    public boolean config_ignore_if_admin_claim;
 
     private void loadAndUpdateConfig() {
         //configが存在すれば読む
@@ -37,7 +36,9 @@ public final class Main extends JavaPlugin implements Listener {
             this.config_claim_size_limits.put(world.getName(), maxArea);
         }
         this.config_message_of_claimLimit = config.getString("MessageOfClaimLimit", "§dThis claim is too large! Claims must be {0} blocks or less. (This claim is {1} Blocks)");
+        this.config_ignore_if_admin_claim = config.getBoolean("IgnoreIfAdminClaim", true);
         outConfig.set("MessageOfClaimLimit", this.config_message_of_claimLimit);
+        outConfig.set("IgnoreIfAdminClaim", this.config_ignore_if_admin_claim);
         try {
             outConfig.save(configFilePath);
         } catch (IOException exception) {
@@ -46,27 +47,25 @@ public final class Main extends JavaPlugin implements Listener {
     }
     @Override
     public void onEnable() {
-        getLogger().info("GriefPreventionAreaSizeLimiter is Loaded.サイズ制限プラグイン読み込み");
+        getLogger().info("[GP Limitter] GriefPreventionAreaSizeLimiter is Loaded.");
         saveDefaultConfig();
         getServer().getPluginManager().registerEvents(this,this);
         loadAndUpdateConfig();
     }
 
     @EventHandler
-    public void onJoin(PlayerJoinEvent event) {
-        getLogger().info("参加！");
-        Player player = event.getPlayer();
-        player.sendMessage("ようこそ！"+"§a"+player.getName()+"さん！");
-    }
-
-    @EventHandler
     public void onClaimCreated(ClaimCreatedEvent event) {
-        // 保護作成時の面積チェック
+        // 保護作成時
         Claim claim = event.getClaim();
         CommandSender player = event.getCreator();
         int areaSize = claim.getArea();
         String worldName = claim.getLesserBoundaryCorner().getWorld().getName(); //作成した保護のあるワールド名
         int maxAreaSizeOfWorld = config_claim_size_limits.get(worldName);
+        // admin保護無視オプションが有効、かつadmin保護なら無視
+        if (this.config_ignore_if_admin_claim && claim.isAdminClaim()) {
+            return;
+        }
+        // 面積判定
         if (maxAreaSizeOfWorld != -1 && areaSize > maxAreaSizeOfWorld) {
             event.setCancelled(true);
             if (player != null) {
@@ -76,12 +75,17 @@ public final class Main extends JavaPlugin implements Listener {
     }
     @EventHandler
     public void onClaimResized(ClaimResizeEvent event) {
-        // 保護サイズ変更時の面積チェック
+        // 保護サイズ変更時
         Claim claim = event.getTo();
         CommandSender player = event.getModifier();
         int areaSize = claim.getArea();
         String worldName = claim.getLesserBoundaryCorner().getWorld().getName(); //作成した保護のあるワールド名
         int maxAreaSizeOfWorld = config_claim_size_limits.get(worldName);
+        // admin保護無視オプションが有効、かつadmin保護なら無視
+        if (this.config_ignore_if_admin_claim && claim.isAdminClaim()) {
+            return;
+        }
+        // 面積判定
         if (maxAreaSizeOfWorld != -1 && areaSize > maxAreaSizeOfWorld) {
             event.setCancelled(true);
             if (player != null) {
