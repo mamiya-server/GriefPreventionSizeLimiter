@@ -3,6 +3,7 @@ package janullq.griefpreventionsizelimiter;
 import me.ryanhamshire.GriefPrevention.Claim;
 import me.ryanhamshire.GriefPrevention.events.ClaimCreatedEvent;
 import me.ryanhamshire.GriefPrevention.events.ClaimResizeEvent;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -12,7 +13,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.checkerframework.checker.units.qual.C;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -45,39 +45,34 @@ public final class Main extends JavaPlugin implements Listener {
         this.config_ignore_if_admin_claim = config.getBoolean("IgnoreIfAdminClaim", true);
         outConfig.set("MessageOfClaimLimit", this.config_message_of_claimLimit);
         outConfig.set("IgnoreIfAdminClaim", this.config_ignore_if_admin_claim);
-        try {
-            outConfig.save(configFilePath);
-        } catch (IOException exception) {
-            getLogger().info("Unable to write to the configuration file at \"" + configFilePath + "\"");
-        }
 
         if (config.contains("ClaimRuleZone")) {
             List<Map<?, ?>> configClaimRuleZoneList = config.getMapList("ClaimRuleZone");
             for (Map<?, ?> configClaimRuleZone : configClaimRuleZoneList) {
                 // 設定値の存在確認
-                if (configClaimRuleZone.containsKey("world") &&
-                        configClaimRuleZone.containsKey("x1") && configClaimRuleZone.containsKey("x2") &&
-                        configClaimRuleZone.containsKey("z1") && configClaimRuleZone.containsKey("z2") &&
+                if (configClaimRuleZone.containsKey("World") &&
+                        configClaimRuleZone.containsKey("X1") && configClaimRuleZone.containsKey("X2") &&
+                        configClaimRuleZone.containsKey("Z1") && configClaimRuleZone.containsKey("Z2") &&
                         configClaimRuleZone.containsKey("ClaimSizeLimit")) {
                     // 設定値の型確認
-                    if (configClaimRuleZone.get("world") instanceof String &&
-                            configClaimRuleZone.get("x1") instanceof Integer &&
-                            configClaimRuleZone.get("x2") instanceof Integer &&
-                            configClaimRuleZone.get("z1") instanceof Integer &&
-                            configClaimRuleZone.get("z2") instanceof Integer &&
+                    if (configClaimRuleZone.get("World") instanceof String &&
+                            configClaimRuleZone.get("X1") instanceof Integer &&
+                            configClaimRuleZone.get("X2") instanceof Integer &&
+                            configClaimRuleZone.get("Z1") instanceof Integer &&
+                            configClaimRuleZone.get("Z2") instanceof Integer &&
                             configClaimRuleZone.get("ClaimSizeLimit") instanceof Integer) {
-                        String worldName = (String) configClaimRuleZone.get("world");
-                        int x1 = (int) configClaimRuleZone.get("x1");
-                        int x2 = (int) configClaimRuleZone.get("x2");
-                        int z1 = (int) configClaimRuleZone.get("z1");
-                        int z2 = (int) configClaimRuleZone.get("z2");
+                        String worldName = (String) configClaimRuleZone.get("World");
+                        int x1 = (int) configClaimRuleZone.get("X1");
+                        int x2 = (int) configClaimRuleZone.get("X2");
+                        int z1 = (int) configClaimRuleZone.get("Z1");
+                        int z2 = (int) configClaimRuleZone.get("Z2");
                         int claimSizeLimit = (int) configClaimRuleZone.get("ClaimSizeLimit");
                         // 指定したワールドが存在すれば、config_claim_rule_zone_listにルールを追加する
                         for (World world : worlds) {
                             if (world.getName().equals(worldName)) {
                                 ClaimRuleZone claimRuleZone = new ClaimRuleZone(world, x1, z1, x2, z2, claimSizeLimit);
-                                if (configClaimRuleZone.containsKey("message")) {
-                                    claimRuleZone.message = (String) configClaimRuleZone.get("message");
+                                if (configClaimRuleZone.containsKey("MessageOfClaimLimit")) {
+                                    claimRuleZone.message = (String) configClaimRuleZone.get("MessageOfClaimLimit");
                                 }
                                 config_claim_rule_zone_list.add(claimRuleZone);
                                 break;
@@ -86,6 +81,14 @@ public final class Main extends JavaPlugin implements Listener {
                     }
                 }
             }
+        }
+
+        outConfig.set("ClaimRuleZone", config.get("ClaimRuleZone"));
+
+        try {
+            outConfig.save(configFilePath);
+        } catch (IOException exception) {
+            getLogger().info("Unable to write to the configuration file at \"" + configFilePath + "\"");
         }
     }
     @Override
@@ -102,14 +105,27 @@ public final class Main extends JavaPlugin implements Listener {
         Claim claim = event.getClaim();
         CommandSender player = event.getCreator();
         int areaSize = claim.getArea();
-        String worldName = claim.getLesserBoundaryCorner().getWorld().getName(); //作成した保護のあるワールド名
-        int maxAreaSizeOfWorld = config_claim_size_limits.get(worldName);
+        Location lesserBoundaryCorner = claim.getLesserBoundaryCorner();
+        World world = lesserBoundaryCorner.getWorld();
+        String worldName = world.getName(); //作成した保護のあるワールド名
         // admin保護無視オプションが有効、かつadmin保護なら無視
         if (this.config_ignore_if_admin_claim && claim.isAdminClaim()) {
             return;
         }
-        // 面積判定
-        if (maxAreaSizeOfWorld != -1 && areaSize > maxAreaSizeOfWorld) {
+        boolean hasRefused = false;
+        // エリアごとのルールの面積判定
+        for (ClaimRuleZone claimRuleZone : config_claim_rule_zone_list) {
+            if (claimRuleZone.isIn(world, (int) lesserBoundaryCorner.x(), (int) lesserBoundaryCorner.z()) &&
+                    claimRuleZone.maxAreaSize != -1 && areaSize > claimRuleZone.maxAreaSize) {
+                event.setCancelled(true);
+                if (player != null) {
+                    player.sendMessage(claimRuleZone.message.replace("{0}", String.valueOf(claimRuleZone.maxAreaSize)).replace("{1}", String.valueOf(areaSize)));
+                }
+            }
+        }
+        // ワールドごとのルールの面積判定
+        int maxAreaSizeOfWorld = config_claim_size_limits.get(worldName);
+        if (!hasRefused && maxAreaSizeOfWorld != -1 && areaSize > maxAreaSizeOfWorld) {
             event.setCancelled(true);
             if (player != null) {
                 player.sendMessage(this.config_message_of_claimLimit.replace("{0}", String.valueOf(maxAreaSizeOfWorld)).replace("{1}", String.valueOf(areaSize)));
@@ -122,14 +138,27 @@ public final class Main extends JavaPlugin implements Listener {
         Claim claim = event.getTo();
         CommandSender player = event.getModifier();
         int areaSize = claim.getArea();
-        String worldName = claim.getLesserBoundaryCorner().getWorld().getName(); //作成した保護のあるワールド名
-        int maxAreaSizeOfWorld = config_claim_size_limits.get(worldName);
+        Location lesserBoundaryCorner = claim.getLesserBoundaryCorner();
+        World world = lesserBoundaryCorner.getWorld();
+        String worldName = world.getName(); //作成した保護のあるワールド名
         // admin保護無視オプションが有効、かつadmin保護なら無視
         if (this.config_ignore_if_admin_claim && claim.isAdminClaim()) {
             return;
         }
-        // 面積判定
-        if (maxAreaSizeOfWorld != -1 && areaSize > maxAreaSizeOfWorld) {
+        boolean hasRefused = false;
+        // エリアごとのルールの面積判定
+        for (ClaimRuleZone claimRuleZone : config_claim_rule_zone_list) {
+            if (claimRuleZone.isIn(world, (int) lesserBoundaryCorner.x(), (int) lesserBoundaryCorner.z()) &&
+                    claimRuleZone.maxAreaSize != -1 && areaSize > claimRuleZone.maxAreaSize) {
+                event.setCancelled(true);
+                if (player != null) {
+                    player.sendMessage(claimRuleZone.message.replace("{0}", String.valueOf(claimRuleZone.maxAreaSize)).replace("{1}", String.valueOf(areaSize)));
+                }
+            }
+        }
+        // ワールドごとのルールの面積判定
+        int maxAreaSizeOfWorld = config_claim_size_limits.get(worldName);
+        if (!hasRefused && maxAreaSizeOfWorld != -1 && areaSize > maxAreaSizeOfWorld) {
             event.setCancelled(true);
             if (player != null) {
                 player.sendMessage(this.config_message_of_claimLimit.replace("{0}", String.valueOf(maxAreaSizeOfWorld)).replace("{1}", String.valueOf(areaSize)));
