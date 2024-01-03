@@ -64,3 +64,8 @@ ClaimRuleZone:
 
 ## コマンド
 + `/reloadGpLimiter`(`/reloadgpl`): `config.yml`を再読み込みします。 
+
+# 更新履歴
+v1.0.0 初期リリース
+v1.1.0 `/reloadGpLimiter`(`/reloadgpl`)コマンドの追加
+v1.2.0 ワールド内の一部のエリアで保護の面積上限を設ける機能の追加
