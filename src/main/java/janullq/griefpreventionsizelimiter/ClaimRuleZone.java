@@ -43,7 +43,9 @@ public class ClaimRuleZone {
     public int getGreaterZ() {
         return this._greaterZ;
     }
-    public boolean isIn(int x, int z) {
-        return (x >= this._lesserX && x <= this._greaterX && z >= this._lesserZ && z <= this._greaterZ);
+    public boolean isIn(World world, int x, int z) {
+        return (world == this._world &&
+                x >= this._lesserX && x <= this._greaterX &&
+                z >= this._lesserZ && z <= this._greaterZ);
     }
 }
