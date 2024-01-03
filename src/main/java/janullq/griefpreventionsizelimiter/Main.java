@@ -12,12 +12,12 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.checkerframework.checker.units.qual.C;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public final class Main extends JavaPlugin implements Listener {
     final static String dataLayerFolderPath = "plugins" + File.separator + "GriefPreventionSizeLimiter";
@@ -25,6 +25,7 @@ public final class Main extends JavaPlugin implements Listener {
     public HashMap<String, Integer> config_claim_size_limits;
     public String config_message_of_claimLimit;
     public boolean config_ignore_if_admin_claim;
+    public List<ClaimRuleZone> config_claim_rule_zone_list;
 
     private void loadAndUpdateConfig() {
         //configが存在すれば読む
@@ -33,6 +34,8 @@ public final class Main extends JavaPlugin implements Listener {
 
         List<World> worlds = this.getServer().getWorlds();
         this.config_claim_size_limits = new HashMap<>();
+        this.config_claim_rule_zone_list = new ArrayList<>();
+
         for (World world : worlds) {
             int maxArea = config.getInt("ClaimSizeLimits." + world.getName(), -1);
             outConfig.set("ClaimSizeLimits." + world.getName(), maxArea);
@@ -46,6 +49,43 @@ public final class Main extends JavaPlugin implements Listener {
             outConfig.save(configFilePath);
         } catch (IOException exception) {
             getLogger().info("Unable to write to the configuration file at \"" + configFilePath + "\"");
+        }
+
+        if (config.contains("ClaimRuleZone")) {
+            List<Map<?, ?>> configClaimRuleZoneList = config.getMapList("ClaimRuleZone");
+            for (Map<?, ?> configClaimRuleZone : configClaimRuleZoneList) {
+                // 設定値の存在確認
+                if (configClaimRuleZone.containsKey("world") &&
+                        configClaimRuleZone.containsKey("x1") && configClaimRuleZone.containsKey("x2") &&
+                        configClaimRuleZone.containsKey("z1") && configClaimRuleZone.containsKey("z2") &&
+                        configClaimRuleZone.containsKey("ClaimSizeLimit")) {
+                    // 設定値の型確認
+                    if (configClaimRuleZone.get("world") instanceof String &&
+                            configClaimRuleZone.get("x1") instanceof Integer &&
+                            configClaimRuleZone.get("x2") instanceof Integer &&
+                            configClaimRuleZone.get("z1") instanceof Integer &&
+                            configClaimRuleZone.get("z2") instanceof Integer &&
+                            configClaimRuleZone.get("ClaimSizeLimit") instanceof Integer) {
+                        String worldName = (String) configClaimRuleZone.get("world");
+                        int x1 = (int) configClaimRuleZone.get("x1");
+                        int x2 = (int) configClaimRuleZone.get("x2");
+                        int z1 = (int) configClaimRuleZone.get("z1");
+                        int z2 = (int) configClaimRuleZone.get("z2");
+                        int claimSizeLimit = (int) configClaimRuleZone.get("ClaimSizeLimit");
+                        // 指定したワールドが存在すれば、config_claim_rule_zone_listにルールを追加する
+                        for (World world : worlds) {
+                            if (world.getName().equals(worldName)) {
+                                ClaimRuleZone claimRuleZone = new ClaimRuleZone(world, x1, z1, x2, z2, claimSizeLimit);
+                                if (configClaimRuleZone.containsKey("message")) {
+                                    claimRuleZone.message = (String) configClaimRuleZone.get("message");
+                                }
+                                config_claim_rule_zone_list.add(claimRuleZone);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
     @Override
