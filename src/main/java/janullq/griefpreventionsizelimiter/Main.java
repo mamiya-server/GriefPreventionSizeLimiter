@@ -73,6 +73,8 @@ public final class Main extends JavaPlugin implements Listener {
                                 ClaimRuleZone claimRuleZone = new ClaimRuleZone(world, x1, z1, x2, z2, claimSizeLimit);
                                 if (configClaimRuleZone.containsKey("MessageOfClaimLimit")) {
                                     claimRuleZone.message = (String) configClaimRuleZone.get("MessageOfClaimLimit");
+                                } else {
+                                    claimRuleZone.message = this.config_message_of_claimLimit;
                                 }
                                 config_claim_rule_zone_list.add(claimRuleZone);
                                 break;
