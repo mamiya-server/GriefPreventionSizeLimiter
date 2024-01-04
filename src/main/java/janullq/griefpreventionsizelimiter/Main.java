@@ -71,8 +71,19 @@ public final class Main extends JavaPlugin implements Listener {
                         for (World world : worlds) {
                             if (world.getName().equals(worldName)) {
                                 ClaimRuleZone claimRuleZone = new ClaimRuleZone(world, x1, z1, x2, z2, claimSizeLimit);
+                                // メッセージの指定
                                 if (configClaimRuleZone.containsKey("MessageOfClaimLimit")) {
                                     claimRuleZone.message = (String) configClaimRuleZone.get("MessageOfClaimLimit");
+                                } else {
+                                    claimRuleZone.message = this.config_message_of_claimLimit;
+                                }
+                                // 保護リサイズ時の効力無効化の設定
+                                if (configClaimRuleZone.containsKey("DisableOnResized")) {
+                                    claimRuleZone.disableOnResized = (boolean) configClaimRuleZone.get("DisableOnResized");
+                                }
+                                // 新規保護作成時の効力無効化の設定
+                                if (configClaimRuleZone.containsKey("DisableOnCreated")) {
+                                    claimRuleZone.disableOnCreated = (boolean) configClaimRuleZone.get("DisableOnCreated");
                                 }
                                 config_claim_rule_zone_list.add(claimRuleZone);
                                 break;
@@ -112,20 +123,21 @@ public final class Main extends JavaPlugin implements Listener {
         if (this.config_ignore_if_admin_claim && claim.isAdminClaim()) {
             return;
         }
-        boolean hasRefused = false;
         // エリアごとのルールの面積判定
         for (ClaimRuleZone claimRuleZone : config_claim_rule_zone_list) {
-            if (claimRuleZone.isIn(world, (int) lesserBoundaryCorner.x(), (int) lesserBoundaryCorner.z()) &&
+            if (!claimRuleZone.disableOnCreated &&
+                    claimRuleZone.isIn(world, (int) lesserBoundaryCorner.x(), (int) lesserBoundaryCorner.z()) &&
                     claimRuleZone.maxAreaSize != -1 && areaSize > claimRuleZone.maxAreaSize) {
                 event.setCancelled(true);
                 if (player != null) {
                     player.sendMessage(claimRuleZone.message.replace("{0}", String.valueOf(claimRuleZone.maxAreaSize)).replace("{1}", String.valueOf(areaSize)));
                 }
+                return;
             }
         }
         // ワールドごとのルールの面積判定
         int maxAreaSizeOfWorld = config_claim_size_limits.get(worldName);
-        if (!hasRefused && maxAreaSizeOfWorld != -1 && areaSize > maxAreaSizeOfWorld) {
+        if (maxAreaSizeOfWorld != -1 && areaSize > maxAreaSizeOfWorld) {
             event.setCancelled(true);
             if (player != null) {
                 player.sendMessage(this.config_message_of_claimLimit.replace("{0}", String.valueOf(maxAreaSizeOfWorld)).replace("{1}", String.valueOf(areaSize)));
@@ -145,20 +157,21 @@ public final class Main extends JavaPlugin implements Listener {
         if (this.config_ignore_if_admin_claim && claim.isAdminClaim()) {
             return;
         }
-        boolean hasRefused = false;
         // エリアごとのルールの面積判定
         for (ClaimRuleZone claimRuleZone : config_claim_rule_zone_list) {
-            if (claimRuleZone.isIn(world, (int) lesserBoundaryCorner.x(), (int) lesserBoundaryCorner.z()) &&
+            if (!claimRuleZone.disableOnResized &&
+                    claimRuleZone.isIn(world, (int) lesserBoundaryCorner.x(), (int) lesserBoundaryCorner.z()) &&
                     claimRuleZone.maxAreaSize != -1 && areaSize > claimRuleZone.maxAreaSize) {
                 event.setCancelled(true);
                 if (player != null) {
                     player.sendMessage(claimRuleZone.message.replace("{0}", String.valueOf(claimRuleZone.maxAreaSize)).replace("{1}", String.valueOf(areaSize)));
                 }
+                return;
             }
         }
         // ワールドごとのルールの面積判定
         int maxAreaSizeOfWorld = config_claim_size_limits.get(worldName);
-        if (!hasRefused && maxAreaSizeOfWorld != -1 && areaSize > maxAreaSizeOfWorld) {
+        if (maxAreaSizeOfWorld != -1 && areaSize > maxAreaSizeOfWorld) {
             event.setCancelled(true);
             if (player != null) {
                 player.sendMessage(this.config_message_of_claimLimit.replace("{0}", String.valueOf(maxAreaSizeOfWorld)).replace("{1}", String.valueOf(areaSize)));
