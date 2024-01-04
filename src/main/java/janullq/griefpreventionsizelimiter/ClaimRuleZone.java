@@ -8,7 +8,9 @@ public class ClaimRuleZone {
     private final int _greaterZ;
     private final World _world;
     public int maxAreaSize;
-    public String message;
+    public String message = "";
+    public boolean disableOnResized = false;
+    public boolean disableOnCreated = false;
     public ClaimRuleZone(World world, int x1, int z1, int x2, int z2, int maxAreaSize) {
         this._world = world;
         if (x1 <= x2) {
@@ -26,7 +28,6 @@ public class ClaimRuleZone {
             this._greaterZ = z1;
         }
         this.maxAreaSize = maxAreaSize;
-        this.message = "";
     }
     public World getWorld() {
         return this._world;
